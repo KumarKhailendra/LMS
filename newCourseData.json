@@ -1,0 +1,46 @@
+{
+    "name": "MERN Stack LMS / Learning managment system with next13",
+    "description":"Welcome to the MERN stack Multi Vendor Ecommerce startup series. In this series, you will learn how to build a startup project with the power of MERN and other latest technologies like tailwind CSS, socket io, redux toolkit, etc. This is a free MERN stack startup series that you will not find on youtube and Udemy right now. support me: https://www. buymeacoffee.com/shahriariarsajeeb Connects with me Instagram: https://www.instagram.com/shahriar_sajeeb Gmail: support@becodemy.com #mern_stack #nodejs #tailwindcss #socketio #becodemy # Multi Vendor MERN Stack E-commerce project With All functionalities absolutely for beginners For business inquiries: sponsorship@becodemy.com", 
+    "price": 29,
+    "estimatedPrice": 80,
+    "tags": "MERN, LMS, next13, typescript, node js,redis",
+    "level": "Intermediate",
+    "demourl": "hgag231",
+    "benefits":[
+        {
+            "title":"You will be able to build a full stack multivendor Ecommerce website"
+        },
+        {
+            "title":"You will learn the best practices of MERN stack"
+        },
+        {
+            "title":"You will learn how to build a chatting app with the power of socket io and MERN stack"
+        }
+    ],
+    "prerequisites":[
+        {
+            "title":"You need basic knowledge of MERN stack"
+        },
+        {
+            "title":"You need to complete any simple MERN project before"
+        },
+        {
+            "title":"You need knowledge of full stack like how to create backend server how it's work and how to connect in frontend"
+        }
+    ],
+    "courseData":[
+        {
+            "VideoUrl": "hydr14f",
+            "title":"Project folder structure setup",
+            "videoSection":"Planing and Project Structure",
+            "description":"Welcome to the MERN stack Multi Vendor Ecommerce startup series. In this series, you will learn how to build a startup project with the power of MERN and other latest technologies like tailwind CSS, socket io, redux toolkit, etc. This is a free MERN stack startup series that you will not find on youtube and Udemy right now. support me: https:/ /www.buymeacoffee.com/shahriariarsajeeb Connects with me Instagram: https://www.instagram.com/shahriar_sajeeb Gmail: support@becodemy.com #mern_stack #nodejs #tailwindcss #socketio #becodemy # Multi Vendor MERN Stack E-commerce project With All functionalities absolutely for beginners For business inquiries: sponsorship@becodemy.com", 
+            "videoLength": 12,
+            "links":[
+                {
+                    "title":"Source Code",
+                    "url":"https://github.com/shahriarsajeeb/Eshop-tutorial"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,47 @@
+import { Document, Model } from "mongoose";
+
+interface MonthData {
+    month: string;
+    count: number;
+}
+
+export async function generateLast12MonthData<T extends Document>(model: Model<T>): Promise<{ last12Months: MonthData[] }> {
+    const last12Months: MonthData[] = [];
+    
+    // Get the current date
+    const currentDate = new Date();
+    currentDate.setDate(currentDate.getDate()+1);
+
+    // Loop over the last 12 months
+    for (let i = 11; i >= 0; i--) {
+        const endDate = new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth(),
+            currentDate.getDate() - i * 28
+        );
+
+        const startDate = new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth(),
+            currentDate.getDate() - 28
+        );
+
+        const monthYear = endDate.toLocaleString("default", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+        })
+        const count = await model.countDocuments({
+            createdAt: {
+                $gte: startDate,
+                $lt: endDate,
+            }
+        });
+
+        // Add the data to the array
+        last12Months.push({ month: monthYear, count });
+    }
+
+    // Return the data
+    return { last12Months };
+}
