@@ -43,8 +43,8 @@ export const createOrder = CatchAsyncError(async (req: Request, res: Response, n
         if(user){
             orderConfirmationMailService(mailData.order, user.email)
         }
-
-        user?.courses.push(course?._id);
+        let userCourseId : any = course._id;
+        user?.courses.push(userCourseId);
 
         await user?.save();
 
