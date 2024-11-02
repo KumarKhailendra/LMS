@@ -1,3 +1,4 @@
+import VideoUploader from '@/components/Video/VideoUploader';
 import { styles } from '@/styles/style';
 import Image from 'next/image';
 import React, { useState } from 'react'
@@ -145,10 +146,10 @@ const CourseInformation: React.FC<Props> = ({ courseInfo, setCourseInfo, active,
                 </div>
                 <br />
                 <div className="w-full flex justify-between">
-                    <div className="w-[45%]">
+                    <div className="w-full">
                         <label htmlFor="level" className={`${styles.label}`}>Course Level</label>
                         <input
-                            type='number'
+                            type='text'
                             name='level'
                             required
                             value={courseInfo.level}
@@ -162,10 +163,10 @@ const CourseInformation: React.FC<Props> = ({ courseInfo, setCourseInfo, active,
                             }
                         />
                     </div>
-                    <div className="w-[45%]">
+                    {/* <div className="w-[45%]">
                         <label htmlFor="demoUrl" className={`${styles.label} w-[50%]`}>Demo URL</label>
                         <input
-                            type='number'
+                            type='text'
                             name='demoUrl'
                             required
                             value={courseInfo.demoUrl}
@@ -178,7 +179,7 @@ const CourseInformation: React.FC<Props> = ({ courseInfo, setCourseInfo, active,
                                 `${styles.input}`
                             }
                         />
-                    </div>
+                    </div> */}
                 </div>
                 <br />
                 <div className="w-full">
@@ -202,6 +203,10 @@ const CourseInformation: React.FC<Props> = ({ courseInfo, setCourseInfo, active,
                             )
                         }
                     </label>
+                </div>
+                <br />
+                <div className="w-full">
+                    <VideoUploader courseInfo={courseInfo} setCourseInfo={setCourseInfo} />
                 </div>
                 <br />
                 <div className="w-full flex items-center justify-end">

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only server.ts"
+    "dev": "ts-node-dev --respawn --transpile-only server.ts",
+    "pmstart": "pm2 ts-node-dev --respawn --transpile-only server.ts"
   },
   "author": "Khailendra Prasad",
   "license": "MIT",

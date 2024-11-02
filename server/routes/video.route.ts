@@ -2,7 +2,9 @@ import express, { Request } from 'express';
 import multer, { StorageEngine } from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { deleteVideo, getAllVideos, streamVideoByIdAndResolution, uploadVideoAndId } from '../controllers/video.controller';
+import { deleteVideo, getAllVideoResolutions, getAllVideos, streamVideoByIdAndResolution, uploadVideoAndId } from '../controllers/video.controller';
+import { isAutheticated } from '../middleware/auth';
+import { updateAccessToken } from '../controllers/user.controller';
 
 const videoRouter = express.Router();
 
@@ -40,9 +42,10 @@ const upload = multer({
 });
 
 // Routes
-videoRouter.post('/upload', upload.single('video'), uploadVideoAndId);
-videoRouter.get('/video/:id/:resolution', streamVideoByIdAndResolution);
+videoRouter.post('/upload', updateAccessToken, isAutheticated, upload.single('video'), uploadVideoAndId);
+videoRouter.get('/video/:id/:resolution', updateAccessToken, isAutheticated, streamVideoByIdAndResolution);
 videoRouter.get('/all', getAllVideos);
-videoRouter.delete('/delete/:id', deleteVideo);
+videoRouter.get('/resolution/:id', updateAccessToken, isAutheticated, getAllVideoResolutions);
+videoRouter.delete('/delete/:id', updateAccessToken, isAutheticated, deleteVideo);
 
 export default videoRouter;

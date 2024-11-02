@@ -1,0 +1,40 @@
+import * as React from "react";
+import { useEffect, useRef } from "react";
+import "@/styles/Slider.css";
+import { RangeSliderProps } from "@/types/component/video.type";
+
+const RangeSlider = ({
+  min = 0,
+  max = 100,
+  value,
+  changeHandler,
+  color = "white",
+}: RangeSliderProps) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const progress = (value / max) * 100;
+
+    if (inputRef.current) {
+      inputRef.current.style.background = `linear-gradient(to right,${
+        color === "orange" ? "#f50" : color
+      } ${progress}%, #ccc ${progress}%)`;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return (
+    <input
+      className={`_6pp-basic-slider slider-theme-${color}`}
+      ref={inputRef}
+      type="range"
+      min={min}
+      max={max}
+      value={value}
+      id="range"
+      onChange={changeHandler}
+    />
+  );
+};
+
+export { RangeSlider };

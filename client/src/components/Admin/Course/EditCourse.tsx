@@ -5,14 +5,18 @@ import CourseOptions from './CourseOptions';
 import CourseData from './CourseData';
 import CourseContent from './CourseContent';
 import CoursePreview from './CoursePreview';
-import { useCreateCourseMutation } from '@/redux/features/courses/coursesApi';
+import { useCreateCourseMutation, useGetAllCoursesQuery } from '@/redux/features/courses/coursesApi';
 import toast from 'react-hot-toast';
 import { redirect } from 'next/navigation';
 
-type Props = {}
+type Props = {
+    id: string;
+}
 
-const CreateCourse = (props: Props) => {
-  const [createCourse, {isLoading, isSuccess, error}] = useCreateCourseMutation();
+const EditCourse: React.FC<Props> = ({id}) => {
+    
+  const {isLoading, data, refetch} = useGetAllCoursesQuery({},{refetchOnMountOrArgChange: true});
+  const editCourseData = data?.courses?.find((item:any)=>item._id === id);
   const [active, setActive] = useState(0);
   const [courseInfo, setCourseInfo] = useState({
     name: '',
@@ -85,22 +89,38 @@ const CreateCourse = (props: Props) => {
   const handleCourseCreate = async(e:any) => {
     const data = courseData;
     if(!isLoading){
-      await createCourse(data)
+    //   await createCourse(data)
     }
   }
-
   useEffect(()=>{
-    if(isSuccess){
-      toast.success("Course created successfully");
-      redirect("/admin/all-courses");
+    if(editCourseData){
+        setCourseInfo({
+            name: editCourseData?.name,
+            description: editCourseData?.description,
+            price: editCourseData?.price,
+            estimatedPrice: editCourseData?.estimatedPrice,
+            tags: editCourseData?.tags,
+            level: editCourseData?.level,
+            demoUrl: editCourseData?.demoUrl,
+            thumbnail: editCourseData?.thumbnail,
+        });
+        setBenefits(editCourseData?.benefits);
+        setPrerequisites(editCourseData?.prerequisites);
+        setCourseContentData(editCourseData?.courseData)
     }
-    if(error){
-      if("data" in error){
-        const errMsg = error as any;
-        toast.error(errMsg.data.message)
-      }
-    }
-  },[isSuccess, error])
+  },[editCourseData]);
+//   useEffect(()=>{
+//     if(isSuccess){
+//       toast.success("Course created successfully");
+//       redirect("/admin/all-courses");
+//     }
+//     if(error){
+//       if("data" in error){
+//         const errMsg = error as any;
+//         toast.error(errMsg.data.message)
+//       }
+//     }
+//   },[isSuccess, error])
 
   return (
     <div className='w-full flex min-h-screen'>
@@ -156,4 +176,4 @@ const CreateCourse = (props: Props) => {
   )
 }
 
-export default CreateCourse
+export default EditCourse

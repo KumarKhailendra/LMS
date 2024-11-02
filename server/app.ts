@@ -25,7 +25,7 @@ app.use(
 )
 
 app.use('/api/v1', userRouter, courseRouter, orderRouter, notificationRouter, analyticsRouter);
-app.use('/api/videos', videoRouter);
+app.use('/api/v1/videos', videoRouter);
 
 app.get("/test", (req: Request, res: Response, next:NextFunction)=>{
     res.status(200).json({

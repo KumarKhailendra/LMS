@@ -72,26 +72,26 @@ export const editCourse = CatchAsyncError(
 // get single course --- without purchasing
 export const getSingleCourse = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const courseId = req.params.id;
+        // const courseId = req.params.id;
 
-        const isCacheExist = await redis.get(courseId);
+        // const isCacheExist = await redis.get(courseId);
 
-        if(isCacheExist){
-            const course = JSON.parse(isCacheExist);
-            res.status(200).json({
-                success: true,
-                course,
-            })
-        }else{
+        // if(isCacheExist){
+        //     const course = JSON.parse(isCacheExist);
+        //     res.status(200).json({
+        //         success: true,
+        //         course,
+        //     })
+        // }else{
             const course = await CourseModel.findById(req.params.id).select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links");
             
-            await redis.set(courseId, JSON.stringify(course), "EX", 604800); // 7days
+            // await redis.set(courseId, JSON.stringify(course), "EX", 604800); // 7days
 
             res.status(200).json({
                 success: true,
                 course,
             })
-        }
+        // }
     } catch (err:any) {
         return next(new ErrorHandler(err.message, 500));
     }
@@ -102,22 +102,22 @@ export const getAllCourse = CatchAsyncError(async (req: Request, res: Response, 
     try {
         const isCacheExist = await redis.get("allCourses");
 
-        if(isCacheExist){
-            const courses = JSON.parse(isCacheExist);
-            res.status(200).json({
-                success: true,
-                courses,
-            })
-        }else{
+        // if(isCacheExist){
+        //     const courses = JSON.parse(isCacheExist);
+        //     res.status(200).json({
+        //         success: true,
+        //         courses,
+        //     })
+        // }else{
             const courses = await CourseModel.find().select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links");
             
-            await redis.set("allCourses", JSON.stringify(courses));
+            // await redis.set("allCourses", JSON.stringify(courses));
 
             res.status(200).json({
                 success: true,
                 courses,
             })
-        }
+        // }
     } catch (err:any) {
         return next(new ErrorHandler(err.message, 500));
     }

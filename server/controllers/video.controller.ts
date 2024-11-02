@@ -9,8 +9,15 @@ ffmpeg.setFfmpegPath(ffmpegPath as string);
 ffmpeg.setFfprobePath(ffprobePath as string);
 import Video, { IVideo } from '../models/video.model';
 import path from 'path';
+import { isDirectoryExist } from '../helper/comman.helper';
 
-const ongoingConversions: Map<string, ffmpeg.FfprobeData[]> = new Map();
+interface ConversionPromiseResult {
+    resolution: string;
+    filepath: string;
+}
+
+// const ongoingConversions: Map<string, ffmpeg.FfprobeData[]> = new Map();
+const ongoingConversions = new Map<string, ffmpeg.FfmpegCommand>();
 
 export const uploadVideoAndId = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -42,48 +49,77 @@ export const uploadVideoAndId = CatchAsyncError(async (req: Request, res: Respon
                     filteredResolutionsValues.push(resolutionsObj[parseInt(key)]);
                 });
 
-            const video = new Video({ originalFilename: filePath });
+            const video = new Video({ originalFilename: filename, originalFilePath: filePath, resolutionsStutas: 0 });
             await video.save();
             res.status(200).json({ resolutions: filteredResolutionsKeys, id: video._id });
             await generateResolutions(filePath, filename, filteredResolutionsValues, video);
+            video.resolutionsStutas = 1;
+            await video.save();
         });
     } catch (err: any) {
         return next(new ErrorHandler(err.message, 500));
     }
 });
 
-const generateResolutions = (filePath: string, filename: string, resolutions: string[], video: IVideo) => {
-    const promises = resolutions.map((resolution: string) => {
-        return new Promise((resolve, reject) => {
-            const outputPath = `uploads/${filename}-${resolution.substring(2)}.mp4`;
-            console.log(`Processing ${outputPath}`);
 
-            const ffmpegProcess:any = ffmpeg(filePath)
-                .output(outputPath)
-                .size(resolution)
-                .on('progress', function (progress: any) {
-                    // socket.emit(resolution, { progress: Math.round(progress.percent + 1.9) });
-                    console.log('Processing: ', resolution.substring(2) + " :" + Math.round(progress.percent + 1.9) + '% done');
-                })
-                .on('end', async () => {
-                    video.resolutions.push({ resolution: resolution.substring(2), filepath: outputPath })
-                    await video.save();
-                    resolve({ resolution: resolution.substring(2), filepath: outputPath })
-                })
-                .on('error', reject)
-                .run();
+const generateResolutions = (filePath: string, filename: string, resolutions: string[], video: IVideo): Promise<ConversionPromiseResult[]> => {
 
-            ongoingConversions.set(outputPath, ffmpegProcess);
+    const promises = resolutions.map((resolution, index) => {
+        return new Promise<ConversionPromiseResult>(async (resolve, reject) => {
+
+            try {
+                isDirectoryExist('uploads')
+                const outputPath = `uploads/${filename}-${resolution.substring(2)}.mp4`;
+                console.log(`Processing ${outputPath}`);
+                const ffmpegProcess = ffmpeg(filePath)
+                    .output(outputPath)
+                    .size(resolution)
+                    .on('progress', function (progress: any) {
+                        console.log('Processing: ', resolution.substring(2) + " :" + Math.round(progress.percent + 1.9) + '% done');
+                    })
+                    .on('start', async () => {
+                        video.resolutions.push({ resolution: resolution.substring(2), filepath: outputPath, resolutionStutas: 0 })
+                    })
+                    .on('end', async () => {
+                        const resolutionIndex = video.resolutions.findIndex(r => r.filepath === outputPath);
+                        if (resolutionIndex !== -1) {
+                            video.resolutions[resolutionIndex].resolutionStutas = 1; // Mark as done
+                            // await video.save()
+                        }
+                        ongoingConversions.delete(outputPath)
+                        resolve({ resolution: resolution.substring(2), filepath: outputPath });
+                    })
+                    .on('error', async (err: Error) => {
+                        console.error('Error during conversion:', err);
+                        const resolutionIndex = video.resolutions.findIndex(r => r.filepath === outputPath);
+                        if (resolutionIndex !== -1) {
+                            video.resolutions[resolutionIndex].resolutionStutas = 2; // Mark as error
+                            // await video.save()
+                        }
+                        ongoingConversions.delete(outputPath);
+                        reject(err);
+                    });
+                ongoingConversions.set(outputPath, ffmpegProcess);
+                ffmpegProcess.run();
+
+            } catch (error) {
+                console.error('Unhandled error during conversion:', error);
+                reject(error);
+            }
         });
     });
-    return Promise.all(promises);
+    console.log("ongoingConversions>>>>>>>>>>>>>", ongoingConversions);
+
+    return Promise.all(promises).catch((err) => {
+        console.error('Error during resolution generation:', err);
+        throw err;  // Re-throw the error if necessary
+    });
 };
 
-const stopOngoingConversions = (videoId: string) => {
+const stopOngoingConversions = (videoName: string) => {
     ongoingConversions.forEach((process: any, filePath: string) => {
-        if (filePath.includes(videoId)) {
-            // Kill the ffmpeg process ( ffmpeg processes can be stopped this way)
-            process.kill();
+        if (filePath.includes(videoName)) {
+            process.ffmpegProc.stdin.write('q');
             ongoingConversions.delete(filePath);
             console.log(`Stopped conversion for ${filePath}`);
         }
@@ -98,9 +134,14 @@ export const streamVideoByIdAndResolution = CatchAsyncError(async (req: Request,
         const video = await Video.findById(id);
         if (!video) return res.status(404).json({ message: 'Video not found' });
 
-        const resFile = video.resolutions.find((res) => res.resolution === resolution);
-        if (!resFile) return res.status(404).json({ message: 'Resolution not found' });
-        const videoPath = path.join(__dirname, '../', resFile.filepath);
+        let videoPath ;
+        if(resolution === 'original'){
+            videoPath = video.originalFilePath;
+        }else{
+            const resFile = video.resolutions.find((res) => res.resolution === resolution);
+            if (!resFile) return res.status(404).json({ message: 'Resolution not found' });
+            videoPath = path.join(__dirname, '../', resFile.filepath);
+        }
 
         const stat = fs.statSync(videoPath);
         const fileSize = stat.size;
@@ -151,23 +192,42 @@ export const getAllVideos = CatchAsyncError(async (req: Request, res: Response, 
 
     }
 });
+// Get video resolution
+export const getAllVideoResolutions = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const video = await Video.findById(req.params.id);
+        const resolution = ['original']
+        video?.resolutions.map((item)=>{
+            resolution.push(item.resolution)
+        })
+
+        res.status(200).json(resolution);
+    } catch (err: any) {
+        return next(new ErrorHandler(err.message, 500));
+
+    }
+});
 
 export const deleteVideo = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
 
         // Find the video and related resolution files
+        const videos = await Video.findById(id);
+        if (!videos) return res.status(404).json({ message: 'Video not found' });
+        stopOngoingConversions(videos.originalFilename)
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
         const video = await Video.findById(id);
         if (!video) return res.status(404).json({ message: 'Video not found' });
 
-        // Stop ongoing conversions
-        stopOngoingConversions(id);
-
+        // Stop ongoing conversions for this video
+        fs.unlinkSync(path.join(__dirname, '../', video.originalFilePath));
         // Delete resolution files
         const filePathArr = video.resolutions;
         for (const file of filePathArr) {
             fs.unlinkSync(path.join(__dirname, '../', file.filepath));
-            console.log(`Deleted file: ${file}`);
+            console.log(`Deleted file: ${file.filepath}`);
         }
 
         // Delete the video record from the database
