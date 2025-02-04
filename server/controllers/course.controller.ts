@@ -39,8 +39,12 @@ export const editCourse = CatchAsyncError(
 
             const thumbnail = data.thumbnail;
 
-            if (thumbnail) {
-                await cloudinary.v2.uploader.destroy(thumbnail.public_id);
+            const courseId = req.params.id;
+
+            const courseData = await CourseModel.findById(courseId) as any;
+
+            if (thumbnail && !thumbnail.url.startsWith("https")) {
+                await cloudinary.v2.uploader.destroy(courseData.thumbnail.public_id);
 
                 const myCloud = await cloudinary.v2.uploader.upload(thumbnail, {
                     folder: "courses"
@@ -52,7 +56,12 @@ export const editCourse = CatchAsyncError(
                 }
             }
 
-            const courseId = req.params.id;
+            if(thumbnail.url.startsWith("https")){
+                data.thumbnail = {
+                    public_id: courseData?.thumbnail.public_id,
+                    url: courseData?.thumbnail.secure_url
+                }
+            }
 
             const course = await CourseModel.findByIdAndUpdate(courseId, {
                 $set: data
@@ -100,7 +109,7 @@ export const getSingleCourse = CatchAsyncError(async (req: Request, res: Respons
 // get all course --- without purchasing
 export const getAllCourse = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const isCacheExist = await redis.get("allCourses");
+        // const isCacheExist = await redis.get("allCourses");
 
         // if(isCacheExist){
         //     const courses = JSON.parse(isCacheExist);
@@ -373,12 +382,12 @@ export const deleteCourse = CatchAsyncError(
         const { id } = req.params;
         const course = await CourseModel.findById(id);
         if (!course) {
-          return next(new ErrorHandler("User not found", 404));
+          return next(new ErrorHandler("Course not found", 404));
         }
+        
+        await CourseModel.deleteOne({ _id: new mongoose.Types.ObjectId(id) });
   
-        await CourseModel.deleteOne({ id });
-  
-        await redis.del(id);
+        // await redis.del(id);
   
         res.status(200).json({
           success: true,

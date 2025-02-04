@@ -64,14 +64,16 @@ const VideoUploader:React.FC<Props> = ({courseContentData, courseInfo, index, se
             if (typeof index !== 'undefined' && courseContentData) {
                 const updateData = [...courseContentData];
                 updateData[index].videoUrl = response?.data?.id;
+                updateData[index].videoLength = response?.data?.duration;
                 setCourseContentData?.(updateData);
             } else if (courseInfo) {
                 setCourseInfo?.({ ...courseInfo, demoUrl: response?.data?.id });
             }
 
-        } catch (error) {
-            toast.error(`Video upload error: ${error}`);
+        } catch (error:any) {
+            toast.error(`Video upload error: ${error.response.data.message}`);
             console.error('Video upload error:', error);
+            setIsUploading(false);
         }
     };
 
@@ -82,8 +84,11 @@ const VideoUploader:React.FC<Props> = ({courseContentData, courseInfo, index, se
                 toast.success(response.data.message);
                 const updateData = [...courseContentData];
                 updateData[index].videoUrl = '';
+                updateData[index].videoLength = 0;
                 setCourseContentData?.(updateData);
+                console.log(">>>>>>>>>>>>>>courseInfo",courseInfo);
             } else if (courseInfo) {
+                
                 const response = await axios.delete(`${baseUrl}videos/delete/${courseInfo.demoUrl}`);
                 toast.success(response.data.message);
                 setCourseInfo?.({ ...courseInfo, demoUrl: '' });

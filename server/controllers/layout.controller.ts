@@ -3,7 +3,7 @@ import { CatchAsyncError } from "../middleware/error";
 import ErrorHandler from "../utils/ErrorHandler";
 import LayoutModel from "../models/layout.model";
 import cloudinary from "cloudinary";
-import { title } from "process";
+
 
 // create layout --- only for admin
 export const createLayout = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
@@ -19,14 +19,17 @@ export const createLayout = CatchAsyncError(async (req: Request, res: Response, 
             const {image, title, subTitle} = req.body;
             const myCloud = await cloudinary.v2.uploader.upload(image,{folder:"layout",});
             const banner = {
-                image: {
-                    public_id: myCloud.public_id,
-                    url: myCloud.secure_url,
+                type: "Banner",
+                banner: {
+                    image: {
+                        public_id: myCloud.public_id,
+                        url: myCloud.secure_url,
+                    },
+                    title, 
+                    subTitle
                 },
-                title, 
-                subTitle
             }
-            await LayoutModel.create({type,banner});
+            await LayoutModel.create(banner);
         }
         if(type === "FAQ"){
             const {faq} = req.body;
@@ -41,15 +44,15 @@ export const createLayout = CatchAsyncError(async (req: Request, res: Response, 
             await LayoutModel.create({type: "FAQ", faq: faqItems});
         }
         if(type === "Categories"){
-            const {Categories} = req.body;
+            const {categories} = req.body;
             const CategorieItems = await Promise.all(
-                Categories.map(async(item:any)=>{
+                categories.map(async(item:any)=>{
                     return {
                         title: item.title,
                     }
                 })
             )
-            await LayoutModel.create({type: "Categories", Categories: CategorieItems});
+            await LayoutModel.create({type: "Categories", categories: CategorieItems});
         }
         res.status(200).json({
             success: true,
@@ -68,14 +71,14 @@ export const editLayout = CatchAsyncError(async (req: Request, res: Response, ne
         if(type === "Banner"){
             const bannerData:any = await LayoutModel.findOne({type:"Banner"});
             const {image, title, subTitle} = req.body;
-            if(bannerData){
-                await cloudinary.v2.uploader.destroy(bannerData.image.public_id);
-            }
-            const myCloud = await cloudinary.v2.uploader.upload(image,{folder:"layout",});
+            const data = image.startsWith("https")? bannerData : await cloudinary.v2.uploader.upload(image, {folder:"layout", });
+
+            // const myCloud = await cloudinary.v2.uploader.upload(image,{folder:"layout",});
             const banner = {
+                type: "Banner",
                 image: {
-                    public_id: myCloud.public_id,
-                    url: myCloud.secure_url,
+                    public_id: image.startsWith("https")?bannerData.banner.image.public_id:data?.public_id,
+                    url: image.startsWith("https")?bannerData.banner.image.url:data?.secure_url,
                 },
                 title, 
                 subTitle
@@ -97,20 +100,37 @@ export const editLayout = CatchAsyncError(async (req: Request, res: Response, ne
             await LayoutModel.findByIdAndUpdate(FaqItem?._id,{type: "FAQ", faq: faqItems});
         }
         if(type === "Categories"){
-            const {Categories} = req.body;
+            const {categories} = req.body;
             const CategoriesItem = await LayoutModel.findOne({type:"Categories"});
             const CategorieItems = await Promise.all(
-                Categories.map(async(item:any)=>{
+                categories.map(async(item:any)=>{
                     return {
                         title: item.title,
                     }
                 })
             )
-            await LayoutModel.findByIdAndUpdate(CategoriesItem?._id, {type: "Categories", Categories: CategorieItems});
+            await LayoutModel.findByIdAndUpdate(CategoriesItem?._id, {type: "Categories", categories: CategorieItems});
         }
         res.status(200).json({
             success: true,
             message: "Layout Updated successfully",
+          });
+    } catch (err: any) {
+        return next(new ErrorHandler(err.message, 500));
+    }
+});
+
+// get layout --- only for admin
+export const getLayoutByType = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const type = req.params.type;
+
+        const layout:any = await LayoutModel.findOne({type});
+
+        res.status(200).json({
+            success: true,
+            layout,
+            message: "Layout Fetch successfully",
           });
     } catch (err: any) {
         return next(new ErrorHandler(err.message, 500));

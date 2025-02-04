@@ -32,7 +32,10 @@ export const uploadVideoAndId = CatchAsyncError(async (req: Request, res: Respon
 
             if (err) return next(new ErrorHandler(`Error processing video: ${err.message}`, 500));
 
-            const videoHeight = metadata.streams[0].height;
+            const videoHeight = metadata.streams[0].height?? metadata.streams[1].height;
+            const videoDuration = metadata.format.duration;
+            console.log(">>>>>>>>>>>>>>metadata.streams[0]", metadata.streams);
+            
 
             const filteredResolutionsKeys: number[] = [];
             const filteredResolutionsValues: string[] = [];
@@ -51,7 +54,7 @@ export const uploadVideoAndId = CatchAsyncError(async (req: Request, res: Respon
 
             const video = new Video({ originalFilename: filename, originalFilePath: filePath, resolutionsStutas: 0 });
             await video.save();
-            res.status(200).json({ resolutions: filteredResolutionsKeys, id: video._id });
+            res.status(200).json({ resolutions: filteredResolutionsKeys, id: video._id, duration: videoDuration });
             await generateResolutions(filePath, filename, filteredResolutionsValues, video);
             video.resolutionsStutas = 1;
             await video.save();

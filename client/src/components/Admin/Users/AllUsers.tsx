@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Box, Button } from '@mui/material';
-import { AiOutlineDelete, AiOutlineEdit } from 'react-icons/ai'
+import { AiOutlineDelete, AiOutlineEdit, AiOutlineMail } from 'react-icons/ai'
 import { useTheme } from 'next-themes';
 import { format } from 'timeago.js';
 import { useGetAllUsersQuery } from '@/redux/features/user/userApi';
 import Loader from '@/components/Loader/Loader';
 import { styles } from '@/styles/style';
+import Link from 'next/link';
 
 type Props = {
     isTeam?: Boolean;
@@ -38,6 +39,23 @@ const AllUsers: React.FC<Props> = ({ isTeam }) => {
                                 size={20}
                             />
                         </Button>
+                    </>
+                )
+            }
+        },
+        {
+            field: "  ",
+            headerName: "Email",
+            flex: 0.2,
+            renderCell: (params: any) => {
+                return (
+                    <>
+                        <Link href={`mailto:${params.row?.email}`} className='flex justify-center align-middle items-center h-full'>
+                            <AiOutlineMail
+                                className='dark:text-white text-black'
+                                size={20}
+                            />
+                        </Link>
                     </>
                 )
             }
@@ -75,14 +93,18 @@ const AllUsers: React.FC<Props> = ({ isTeam }) => {
                     <Loader />
                 ) : (
                     <Box m="20px">
-                        <div className="w-full flex justify-end">
-                            <div 
-                                className={`${styles.button} !w-[200px] dark:bg-[#57c7a3] !h-[35px] dark:border dark:border-[#ffffff6c]`}
-                                onClick={()=>setActive(!active)}
-                            >
-                                Add New Member
-                            </div>
-                        </div>
+                        {
+                            isTeam && (
+                                <div className="w-full flex justify-end">
+                                    <div
+                                        className={`${styles.button} !w-[200px] dark:bg-[#57c7a3] !h-[35px] dark:border dark:border-[#ffffff6c]`}
+                                        onClick={() => setActive(!active)}
+                                    >
+                                        Add New Member
+                                    </div>
+                                </div>
+                            )
+                        }
                         <Box
                             m="40px 0 0 0"
                             height={"80vh"}

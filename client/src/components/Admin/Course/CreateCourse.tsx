@@ -21,6 +21,7 @@ const CreateCourse = (props: Props) => {
     estimatedPrice: '',
     tags: '',
     level: '',
+    category: '',
     demoUrl: '',
     thumbnail: '',
   });
@@ -32,6 +33,7 @@ const CreateCourse = (props: Props) => {
       title: '',
       description: '',
       videoSection: "Untitled Section",
+      videoLength: 0,
       links: [
         {
           title: '',
@@ -55,6 +57,7 @@ const CreateCourse = (props: Props) => {
       title: courseContent.title,
       description: courseContent.description,
       videoSection: courseContent.videoSection,
+      videoLength: courseContent.videoLength,
       links: courseContent.links.map((link)=>({
         title: link.title,
         url: link.url,
@@ -67,6 +70,7 @@ const CreateCourse = (props: Props) => {
     const data = {
       name: courseInfo.name,
       description: courseInfo.description,
+      categories: courseInfo.category,
       price: courseInfo.price,
       estimatedPrice: courseInfo.estimatedPrice,
       tags: courseInfo.tags,
@@ -92,7 +96,7 @@ const CreateCourse = (props: Props) => {
   useEffect(()=>{
     if(isSuccess){
       toast.success("Course created successfully");
-      redirect("/admin/all-courses");
+      redirect("/admin/courses");
     }
     if(error){
       if("data" in error){

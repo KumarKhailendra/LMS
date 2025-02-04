@@ -5,18 +5,18 @@ import CourseOptions from './CourseOptions';
 import CourseData from './CourseData';
 import CourseContent from './CourseContent';
 import CoursePreview from './CoursePreview';
-import { useCreateCourseMutation, useGetAllCoursesQuery } from '@/redux/features/courses/coursesApi';
+import { useEditCourseMutation, useGetAllCoursesQuery } from '@/redux/features/courses/coursesApi';
 import toast from 'react-hot-toast';
 import { redirect } from 'next/navigation';
 
 type Props = {
-    id: string;
+  id: string;
 }
 
-const EditCourse: React.FC<Props> = ({id}) => {
-    
-  const {isLoading, data, refetch} = useGetAllCoursesQuery({},{refetchOnMountOrArgChange: true});
-  const editCourseData = data?.courses?.find((item:any)=>item._id === id);
+const EditCourse: React.FC<Props> = ({ id }) => {
+  const [editCourse, {isSuccess, error}] = useEditCourseMutation()
+  const { isLoading, data, refetch } = useGetAllCoursesQuery({}, { refetchOnMountOrArgChange: true });
+  const editCourseData = data?.courses?.find((item: any) => item._id === id);
   const [active, setActive] = useState(0);
   const [courseInfo, setCourseInfo] = useState({
     name: '',
@@ -49,17 +49,17 @@ const EditCourse: React.FC<Props> = ({id}) => {
 
   const handleSubmit = async () => {
     // Format benefits array
-    const formatedbenefits = benefits.map((benefit)=> ({title:benefit.title}));
+    const formatedbenefits = benefits.map((benefit) => ({ title: benefit.title }));
     // Format prerequisites array
-    const formatedPrerequisites = prerequisites.map((prerequisite)=> ({title:prerequisite.title}));
+    const formatedPrerequisites = prerequisites.map((prerequisite) => ({ title: prerequisite.title }));
 
     // Format course content array
-    const formatedCourseContentData = courseContentData.map((courseContent)=>({
+    const formatedCourseContentData = courseContentData.map((courseContent) => ({
       videoUrl: courseContent.videoUrl,
       title: courseContent.title,
       description: courseContent.description,
       videoSection: courseContent.videoSection,
-      links: courseContent.links.map((link)=>({
+      links: courseContent.links.map((link) => ({
         title: link.title,
         url: link.url,
       })),
@@ -86,41 +86,42 @@ const EditCourse: React.FC<Props> = ({id}) => {
     setCourseData(data);
   }
 
-  const handleCourseCreate = async(e:any) => {
+  const handleCourseCreate = async (e: any) => {
     const data = courseData;
-    if(!isLoading){
-    //   await createCourse(data)
+    if (!isLoading) {
+        await editCourse({id, data})
     }
   }
-  useEffect(()=>{
-    if(editCourseData){
-        setCourseInfo({
-            name: editCourseData?.name,
-            description: editCourseData?.description,
-            price: editCourseData?.price,
-            estimatedPrice: editCourseData?.estimatedPrice,
-            tags: editCourseData?.tags,
-            level: editCourseData?.level,
-            demoUrl: editCourseData?.demoUrl,
-            thumbnail: editCourseData?.thumbnail,
-        });
-        setBenefits(editCourseData?.benefits);
-        setPrerequisites(editCourseData?.prerequisites);
-        setCourseContentData(editCourseData?.courseData)
+  useEffect(() => {
+    if (editCourseData) {
+      setCourseInfo({
+        name: editCourseData?.name,
+        description: editCourseData?.description,
+        price: editCourseData?.price,
+        estimatedPrice: editCourseData?.estimatedPrice,
+        tags: editCourseData?.tags,
+        level: editCourseData?.level,
+        demoUrl: editCourseData?.demoUrl,
+        thumbnail: editCourseData?.thumbnail,
+      });
+      setBenefits(editCourseData?.benefits);
+      setPrerequisites(editCourseData?.prerequisites);
+      setCourseContentData(editCourseData?.courseData)
     }
-  },[editCourseData]);
-//   useEffect(()=>{
-//     if(isSuccess){
-//       toast.success("Course created successfully");
-//       redirect("/admin/all-courses");
-//     }
-//     if(error){
-//       if("data" in error){
-//         const errMsg = error as any;
-//         toast.error(errMsg.data.message)
-//       }
-//     }
-//   },[isSuccess, error])
+  }, [editCourseData]);
+
+    useEffect(()=>{
+      if(isSuccess){
+        toast.success("Course updated successfully");
+        redirect("/admin/courses");
+      }
+      if(error){
+        if("data" in error){
+          const errMsg = error as any;
+          toast.error(errMsg.data.message)
+        }
+      }
+    },[isSuccess, error])
 
   return (
     <div className='w-full flex min-h-screen'>
@@ -152,7 +153,7 @@ const EditCourse: React.FC<Props> = ({id}) => {
             <CourseContent
               active={active}
               setActive={setActive}
-              courseContentData={courseContentData} 
+              courseContentData={courseContentData}
               setCourseContentData={setCourseContentData}
               handleSubmit={handleSubmit}
             />
@@ -165,6 +166,7 @@ const EditCourse: React.FC<Props> = ({id}) => {
               setActive={setActive}
               courseData={courseData}
               handleCourseCreate={handleCourseCreate}
+              isEdit={true}
             />
           )
         }
